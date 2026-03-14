@@ -1,2 +1,2 @@
 # TrackTUI
-terminal user interface tracking global market
+terminal user interface that lets you edit json files
