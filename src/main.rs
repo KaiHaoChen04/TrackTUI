@@ -1,11 +1,12 @@
-use ratatui::crossterm::event::EnableMouseCapture;
-use ratatui::crossterm::execute;
-use ratatui::crossterm::terminal::{enable_raw_mode, EnterAlternateScreen};
-use ratatui::crossterm::event::DisableMouseCapture;
-use ratatui::crossterm::terminal::{disable_raw_mode, LeaveAlternateScreen};
-use ratatui::backend::CrosstermBackend;
-use ratatui::prelude::Backend;
-use ratatui::Terminal;
+use ratatui::{
+    backend::{Backend, CrosstermBackend},
+    crossterm::{
+        event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+        execute,
+        terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    },
+    Terminal,
+};
 
 use std::{error::Error, io};
 
@@ -49,4 +50,84 @@ where
     io::Error: From<B::Error>,
 {
 
+    loop {
+        terminal.draw(|f| ui(f, app))?;
+
+        // block call to read event info
+        if let Event::Key(key) = event::read()? {
+            if key.kind == event::KeyEventKind::Release {
+                continue;
+            }
+            match app.current_screen {
+                CurrentScreen::Main => match key.code {
+                    KeyCode::Char('e') => {
+                        app.current_screen = CurrentScreen::Editing;
+                        app.currently_editing = Some(CurrentlyEditing::Key);
+                    }
+                    KeyCode::Char('q') => {
+                        app.current_screen = CurrentScreen::Exiting;
+                    }
+                    _ => {}
+                },
+                CurrentScreen::Exiting => match key.code {
+                    KeyCode::Char('y') => {
+                        return Ok(true)
+                    }
+                    KeyCode::Char('n') => {
+                        return Ok(false)
+                    }
+                },
+                CurrentScreen::Editing if key.kind == KeyEventKind::Press => {
+                    match key.code {
+                        KeyCode::Enter => {
+                            if let Some(editing) = &app.currently_editing {
+                                match editing {
+                                    CurrentlyEditing::Key => {
+                                        app.currently_editing = Some(CurrentlyEditing::Value);
+                                    }
+                                    CurrentlyEditing::Value => {
+                                        app.save_key_value();
+                                        app.current_screen = CurrentScreen::Main;
+                                    }
+                                }
+                            }
+                        }
+                        KeyCode::Backspace => {
+                            if let Some(editing) = &app.currently_editing {
+                                match editing {
+                                    CurrentlyEditing::Key => {
+                                        app.key_input.pop();
+                                    }
+                                    CurrentlyEditing::Value => {
+                                        app.value_input.pop();
+                                    }
+                                }
+                            }
+                        }
+                        KeyCode::Esc => {
+                            app.current_screen = CurrentScreen::Main;
+                            app.currently_editing = None;
+                        }
+                        KeyCode::Tab => {
+                            app.toggle_editing();
+                        }
+                        KeyCode::Char(value) => {
+                            if let Some(editing) = &app.currently_editing {
+                                match editing {
+                                    CurrentlyEditing::Key => {
+                                        app.key_input.push(value);
+                                    }
+                                    CurrentlyEditing::Value => {
+                                        app.value_input.push(value);
+                                    }
+                                }
+                            }
+                        }
+                    _ => {}
+                    }
+                }
+                _ => {} 
+            }
+        }
+    }
 }
