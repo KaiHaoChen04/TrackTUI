@@ -15,6 +15,7 @@ mod app;
 mod ui;
 use crate::{
     app::{App, CurrentScreen, CurrentlyEditing},
+    ui::ui,
 };
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -76,6 +77,7 @@ where
                     KeyCode::Char('n') => {
                         return Ok(false)
                     }
+                    _ => {}
                 },
                 CurrentScreen::Editing if key.kind == KeyEventKind::Press => {
                     match key.code {
