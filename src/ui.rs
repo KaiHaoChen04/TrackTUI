@@ -50,6 +50,7 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
                 Span::styled("Editing Mode", Style::default().fg(Color::Yellow))
             }
             CurrentScreen::Exiting => Span::styled("Exiting", Style::default().fg(Color::LightRed)),
+            CurrentScreen::Warning => Span::styled("Warning", Style::default().fg(Color::Red)),
         }
         .to_owned(),
         Span::styled(" | ", Style::default().fg(Color::White)),
@@ -83,6 +84,10 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
             ),
             CurrentScreen::Exiting => Span::styled(
                 "(q) to quit / (e) to make new pair",
+                Style::default().fg(Color::Red),
+            ),
+            CurrentScreen::Warning => Span::styled(
+                "Fill in the key",
                 Style::default().fg(Color::Red),
             ),
         }
@@ -150,6 +155,25 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
 
         let area = center_rect(60, 25, frame.area());
         frame.render_widget(exit_paragraph, area);
+    }
+    if let CurrentScreen::Warning = app.current_screen {
+        frame.render_widget(Clear, frame.area());
+
+        let popup_block = Block::default()
+            .borders(Borders::NONE)
+            .style(Style::default().bg(Color::LightRed));
+
+        let warning_text = Text::styled(
+            "A Key cannot be empty, please fill",
+            Style::default().fg(Color::White),
+        );
+
+        let warning_paragraph = Paragraph::new(warning_text)
+            .block(popup_block)
+            .wrap(Wrap {trim: false});
+
+        let area = center_rect(60, 25, frame.area());
+        frame.render_widget(warning_paragraph, area);
     }
 }
 
