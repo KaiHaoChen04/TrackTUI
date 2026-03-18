@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::{Duration, Instant}};
 
 //Three screens
 pub enum CurrentScreen{
@@ -19,6 +19,7 @@ pub struct App {
     pub pairs: HashMap<String, String>, // key,value pair with serde support
     pub current_screen: CurrentScreen,
     pub currently_editing: Option<CurrentlyEditing>,
+    pub warning_time: Option<Instant>,
 }
 impl App {
     pub fn new() -> App {
@@ -28,16 +29,31 @@ impl App {
             pairs: HashMap::new(),
             current_screen: CurrentScreen::Main,
             currently_editing: None,
+            warning_time: None,
         }
     }
 
-    pub fn save_key_value(&mut self){
+    pub fn save_key_value(&mut self) -> bool {
+        if self.key_input.trim().is_empty() {
+            false;
+        }
         self.pairs.insert(self.key_input.clone(), self.value_input.clone());
-
+        
         //Reset editing variables after appending
         self.key_input = String::new();
         self.value_input = String::new();
         self.currently_editing = None;
+        self.warning_time = None;
+        true
+    }
+
+    pub fn check_warning_timeout(&mut self) {
+        if let Some(warning_start) = self.warning_time {
+            if warning_start.elapsed() >= Duration::from_secs(2) {
+                self.current_screen = CurrentScreen::Editing;
+                self.warning_time = None;
+            }
+        }
     }
 
     pub fn toggle_editing(&mut self) {
