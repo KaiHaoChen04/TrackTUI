@@ -88,8 +88,13 @@ where
                                         app.currently_editing = Some(CurrentlyEditing::Value);
                                     }
                                     CurrentlyEditing::Value => {
-                                        app.save_key_value();
-                                        app.current_screen = CurrentScreen::Main;
+                                        if app.key_input.trim().is_empty() {
+                                            app.current_screen = CurrentScreen::Warning;
+                                        }
+                                        else {
+                                            app.save_key_value();
+                                            app.current_screen = CurrentScreen::Main;
+                                        }
                                     }
                                 }
                             }
